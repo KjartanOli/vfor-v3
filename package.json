@@ -5,7 +5,7 @@
   "main": "index.js",
   "scripts": {
     "dev": "nodemon",
-    "start": "node --loader ts-node/esm ./src/app.ts"
+    "start": "node --env-file=.env --loader ts-node/esm ./src/app.ts"
   },
   "keywords": [],
   "author": "",
