@@ -4,9 +4,14 @@ import { Option, Some, None, Result, Err, Ok } from 'ts-results-es';
 import type { Game, GameId, Slug, Team, TeamId } from './types.js';
 import { make_slug } from "./utils.js";
 
-export const db = postgres({
-    database: 'vfor-v3'
-});
+
+const connection_string = process.env.DATABASE_URL;
+if (!connection_string) {
+    console.error('Could not find DATABASE_URL in the environment');
+    process.exit(1);
+}
+
+export const db = postgres(connection_string);
 
 function make_team(row: Row): Team {
     return {
@@ -36,30 +41,40 @@ function make_game(row: Row): Game {
 }
 
 function make_user(row: Row): User {
-  return {
-    id: row.id,
-    username: row.username,
-    password: row.password,
-    name: row.name,
-  }
+    return {
+        id: row.id,
+        username: row.username,
+        password: row.password,
+        name: row.name,
+    }
 }
 
-export async function get_user(username: string): Promise<Option<User>> {
-  const res = await db`
+export async function get_user(username: string): Promise<Result<Option<User>, any>> {
+    try {
+        const res = await db`
 SELECT id, username, name, password
 FROM users
 WHERE username = ${username}`;
 
-  if (res.length < 1)
-    return None;
+        if (res.length < 1)
+            return Ok(None);
 
-  return Some(make_user(res[0]));
+        return Ok(Some(make_user(res[0])));
+    } catch (e: any) {
+        console.log(e);
+        console.log(e.query);
+        return Err(e);
+    }
 }
 
-export async function get_teams(): Promise<Array<Team>> {
-    const teams = await db`SELECT slug, name, description FROM teams;`;
+export async function get_teams(): Promise<Result<Array<Team>, any>> {
+    try {
+        const teams = await db`SELECT slug, name, description FROM teams;`;
 
-    return teams.map(make_team);
+        return Ok(teams.map(make_team));
+    } catch (e: any) {
+        return Err(e);
+    }
 }
 
 export async function get_team_id(slug: Slug): Promise<Option<TeamId>> {
@@ -82,7 +97,7 @@ WHERE slug = ${slug}`;
     if (res.count < 1)
         return None;
 
-  return Some(make_team(res[0]));
+    return Some(make_team(res[0]));
 }
 
 export async function create_team(name: string, description: string): Promise<Result<Team, string>> {
@@ -91,14 +106,14 @@ export async function create_team(name: string, description: string): Promise<Re
     if (await get_team(slug))
         return Err('Team exists');
 
-  const res = await db`
+    const res = await db`
 INSERT INTO teams(slug, name, description)
 VALUES(${slug}, ${name}, ${description})
 RETURNING slug, name, description`;
 
-  if (res.length < 1)
-    return Err('Error creating team');
-  return Ok(make_team(res[0]));
+    if (res.length < 1)
+        return Err('Error creating team');
+    return Ok(make_team(res[0]));
 }
 
 export async function update_team(
@@ -115,7 +130,7 @@ RETURNING slug, name, description`;
     if (res.length < 0)
         return Promise.reject('Error updating team');
 
-  return Some(make_team(res[0]));
+    return Some(make_team(res[0]));
 }
 
 export async function delete_team(slug: Slug) {
@@ -165,7 +180,7 @@ WHERE g.id = ${id};`;
     if (res.length < 1)
         return None;
 
-  return Some(make_game(res[0]));
+    return Some(make_game(res[0]));
 }
 
 export async function create_game(

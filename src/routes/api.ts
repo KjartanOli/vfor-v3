@@ -6,7 +6,7 @@ import { get_teams, create_team, get_team, update_team, delete_team, get_user } 
 import { get_games } from '../lib/db.js';
 import { get_game } from '../lib/db.js';
 import { delete_game } from '../lib/db.js';
-import { ProtoGame, Slug, TeamId, InvalidField } from '../lib/types.js';
+import { ProtoGame, Slug, InvalidField } from '../lib/types.js';
 import { get_team_id } from '../lib/db.js';
 import { create_game } from '../lib/db.js';
 import { make_slug } from '../lib/utils.js';
@@ -18,47 +18,47 @@ export const router = express.Router();
 const argon = new Argon2id();
 
 async function ensureAuthenticated(req: Request, res: Response, next: NextFunction) {
-  if (!req.headers.authorization) {
-    res.status(401).json({ error: 'Missing Authorization header'});
-    return;
-  }
-  const [_, token] = req.headers.authorization.split(' ');
-  if (!token) {
-    res.status(401).json({ error: 'Session token mising from Authorization header'});
-    return;
-  }
+    if (!req.headers.authorization) {
+        res.status(401).json({ error: 'Missing Authorization header' });
+        return;
+    }
+    const [_, token] = req.headers.authorization.split(' ');
+    if (!token) {
+        res.status(401).json({ error: 'Session token mising from Authorization header' });
+        return;
+    }
 
-  const { session } = await auth.validateSession(token);
-  if (!session) {
-    res.status(401).json({ error: 'Invalid session token' });
-    return;
-  }
-  next();
+    const { session } = await auth.validateSession(token);
+    if (!session) {
+        res.status(401).json({ error: 'Invalid session token' });
+        return;
+    }
+    next();
 }
 
 async function index(req: Request, res: Response) {
-  res.json([
-    {
-      href: '/login',
-      methods: ['POST']
-    },
-    {
-      href: '/teams',
-      methods: ['GET', 'POST']
-    },
-    {
-      href: '/teams:slug',
-      methods: ['GET', 'PATCH', 'DELETE']
-    },
-    {
-      href: '/games',
-      methods: ['GET', 'POST']
-    },
-    {
-      href: '/games/:id',
-      methods: ['GET', 'PATCH', 'DELETE']
-    }
-  ]);
+    res.json([
+        {
+            href: '/login',
+            methods: ['POST']
+        },
+        {
+            href: '/teams',
+            methods: ['GET', 'POST']
+        },
+        {
+            href: '/teams:slug',
+            methods: ['GET', 'PATCH', 'DELETE']
+        },
+        {
+            href: '/games',
+            methods: ['GET', 'POST']
+        },
+        {
+            href: '/games/:id',
+            methods: ['GET', 'PATCH', 'DELETE']
+        }
+    ]);
 }
 
 async function login(req: Request, res: Response) {
@@ -73,21 +73,30 @@ async function login(req: Request, res: Response) {
         return;
     }
 
-  const user = await get_user(username);
+    const user = await get_user(username);
 
-  if (user.isNone() || !await argon.verify(user.value.password, password)) {
-    res.status(400).json({ error: 'Invalid username or password' });
-    return;
-  }
+    if (user.isErr()) {
+        res.status(500).json({ error: 'Internal error' });
+        return;
+    }
 
-  const session = await auth.createSession(user.value.id, {});
-  res.json({ token: session.id });
+    if (user.value.isNone() || !await argon.verify(user.value.value.password, password)) {
+        res.status(400).json({ error: 'Invalid username or password' });
+        return;
+    }
+
+    const session = await auth.createSession(user.value.value.id, {});
+    res.json({ token: session.id });
 }
 
 async function getTeams(req: Request, res: Response) {
     const teams = await get_teams();
 
-    res.json(teams)
+    if (teams.isErr()) {
+        res.status(500).json({ error: 'Internal error' });
+        return;
+    }
+    res.json(teams.value)
 }
 
 async function postTeams(req: Request, res: Response) {
