@@ -12,7 +12,6 @@ import { create_game } from '../lib/db.js';
 import { make_slug } from '../lib/utils.js';
 
 import { auth } from '../lib/auth.js';
-import { generateId } from 'lucia';
 
 export const router = express.Router();
 
@@ -35,6 +34,31 @@ async function ensureAuthenticated(req: Request, res: Response, next: NextFuncti
     return;
   }
   next();
+}
+
+async function index(req: Request, res: Response) {
+  res.json([
+    {
+      href: '/login',
+      methods: ['POST']
+    },
+    {
+      href: '/teams',
+      methods: ['GET', 'POST']
+    },
+    {
+      href: '/teams:slug',
+      methods: ['GET', 'PATCH', 'DELETE']
+    },
+    {
+      href: '/games',
+      methods: ['GET', 'POST']
+    },
+    {
+      href: '/games/:id',
+      methods: ['GET', 'PATCH', 'DELETE']
+    }
+  ]);
 }
 
 async function login(req: Request, res: Response) {
@@ -311,6 +335,7 @@ async function deleteGame(req: Request, res: Response) {
     res.status(204).send();
 }
 
+router.get('/', index);
 router.post('/login', login);
 
 router.get('/teams', getTeams);
