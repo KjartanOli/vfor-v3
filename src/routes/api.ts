@@ -37,6 +37,31 @@ async function ensureAuthenticated(req: Request, res: Response, next: NextFuncti
   next();
 }
 
+async function index(req: Request, res: Response) {
+  res.json([
+    {
+      href: '/login',
+      methods: ['POST']
+    },
+    {
+      href: '/teams',
+      methods: ['GET', 'POST']
+    },
+    {
+      href: '/teams:slug',
+      methods: ['GET', 'PATCH', 'DELETE']
+    },
+    {
+      href: '/games',
+      methods: ['GET', 'POST']
+    },
+    {
+      href: '/games/:id',
+      methods: ['GET', 'PATCH', 'DELETE']
+    }
+  ]);
+}
+
 async function login(req: Request, res: Response) {
     const { username = null, password = null } = req.body;
 
