@@ -103,7 +103,7 @@ WHERE slug = ${slug}`;
 export async function create_team(name: string, description: string): Promise<Result<Team, string>> {
     const slug = make_slug(name);
 
-    if (await get_team(slug))
+  if ((await get_team(slug)).isSome())
         return Err('Team exists');
 
     const res = await db`
