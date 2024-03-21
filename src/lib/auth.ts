@@ -16,8 +16,8 @@ interface DatabaseUserAttributes {
 }
 
 const adapter = new PostgresJsAdapter(db, {
-    user: 'users',
-    session: 'user_session',
+    user: 'v3.users',
+    session: 'v3.user_session',
 });
 
 export const auth = new Lucia(adapter, {

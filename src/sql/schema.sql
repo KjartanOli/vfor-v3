@@ -1,20 +1,20 @@
-CREATE TABLE IF NOT EXISTS teams (
+CREATE TABLE IF NOT EXISTS v3.teams (
   id SERIAL PRIMARY KEY,
   slug VARCHAR(128) NOT NULL UNIQUE,
   name VARCHAR(128) NOT NULL UNIQUE,
   description VARCHAR(1024)
 );
 
-CREATE TABLE IF NOT EXISTS games (
+CREATE TABLE IF NOT EXISTS v3.games (
   id SERIAL PRIMARY KEY,
   date TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT current_timestamp,
-  home INTEGER NOT NULL REFERENCES teams(id),
-  away INTEGER NOT NULL REFERENCES teams(id),
+  home INTEGER NOT NULL REFERENCES v3.teams(id),
+  away INTEGER NOT NULL REFERENCES v3.teams(id),
   home_score INTEGER NOT NULL CHECK (home_score >= 0),
   away_score INTEGER NOT NULL CHECK (away_score >= 0)
 );
 
-CREATE TABLE IF NOT EXISTS users (
+CREATE TABLE IF NOT EXISTS v3.users (
   id CHAR(15) PRIMARY KEY,
   username VARCHAR(60) NOT NULL UNIQUE,
   name VARCHAR(60) NOT NULL,
@@ -22,22 +22,22 @@ CREATE TABLE IF NOT EXISTS users (
   admin BOOLEAN DEFAULT false
 );
 
-CREATE TABLE user_session (
+CREATE TABLE v3.user_session (
     id VARCHAR(50) PRIMARY KEY,
     expires_at TIMESTAMPTZ NOT NULL,
-    user_id CHAR(15) NOT NULL REFERENCES users(id)
+    user_id CHAR(15) NOT NULL REFERENCES v3.users(id)
 );
 
-CREATE OR REPLACE FUNCTION delete_team_games()
+CREATE OR REPLACE FUNCTION v3.delete_team_games()
 RETURNS TRIGGER AS $$
 BEGIN
-DELETE FROM games 
+DELETE FROM v3.games 
 WHERE home = OLD.id OR away = OLD.id;
 RETURN OLD;
 END;
 $$
 LANGUAGE plpgsql;
 
-CREATE OR REPLACE TRIGGER before_team_delete BEFORE DELETE ON teams
+CREATE OR REPLACE TRIGGER v3.before_team_delete BEFORE DELETE ON teams
 FOR EACH ROW
 EXECUTE FUNCTION delete_team_games();

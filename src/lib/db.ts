@@ -53,7 +53,7 @@ export async function get_user(username: string): Promise<Result<Option<User>, a
     try {
         const res = await db`
 SELECT id, username, name, password
-FROM users
+FROM v3.users
 WHERE username = ${username}`;
 
         if (res.length < 1)
@@ -69,7 +69,7 @@ WHERE username = ${username}`;
 
 export async function get_teams(): Promise<Result<Array<Team>, any>> {
     try {
-        const teams = await db`SELECT slug, name, description FROM teams;`;
+        const teams = await db`SELECT slug, name, description FROM v3.teams;`;
 
         return Ok(teams.map(make_team));
     } catch (e: any) {
@@ -78,7 +78,7 @@ export async function get_teams(): Promise<Result<Array<Team>, any>> {
 }
 
 export async function get_team_id(slug: Slug): Promise<Option<TeamId>> {
-    const res = await db`SELECT id FROM teams WHERE slug = ${slug}`;
+    const res = await db`SELECT id FROM v3.teams WHERE slug = ${slug}`;
 
     if (res.length < 1)
         return None;
@@ -91,7 +91,7 @@ SELECT
  slug,
  name,
  description
-FROM teams
+FROM v3.teams
 WHERE slug = ${slug}`;
 
     if (res.count < 1)
@@ -107,7 +107,7 @@ export async function create_team(name: string, description: string): Promise<Re
         return Err('Team exists');
 
     const res = await db`
-INSERT INTO teams(slug, name, description)
+INSERT INTO v3.teams(slug, name, description)
 VALUES(${slug}, ${name}, ${description})
 RETURNING slug, name, description`;
 
@@ -122,7 +122,7 @@ export async function update_team(
 ): Promise<Option<Team>> {
 
     const res = await db`
-UPDATE teams
+UPDATE v3.teams
 SET slug = ${team.slug}, name = ${team.name}, description = ${team.description}
 WHERE slug = ${old_slug}
 RETURNING slug, name, description`;
@@ -135,7 +135,7 @@ RETURNING slug, name, description`;
 
 export async function delete_team(slug: Slug) {
     await db`
-DELETE FROM teams
+DELETE FROM v3.teams
 WHERE slug = ${slug}`;
 }
 
@@ -152,9 +152,9 @@ SELECT
     a.description AS away_description,
     home_score,
     away_score
-FROM games g
-INNER JOIN teams h ON h.id = home
-INNER JOIN teams a ON a.id = away;`;
+FROM v3.games g
+INNER JOIN v3.teams h ON h.id = home
+INNER JOIN v3.teams a ON a.id = away;`;
 
     return res.map(make_game);
 }
@@ -172,9 +172,9 @@ SELECT
     a.description AS away_description,
     home_score,
     away_score
-FROM games g
-INNER JOIN teams h ON h.id = home
-INNER JOIN teams a ON a.id = away
+FROM v3.games g
+INNER JOIN v3.teams h ON h.id = home
+INNER JOIN v3.teams a ON a.id = away
 WHERE g.id = ${id};`;
 
     if (res.length < 1)
@@ -191,7 +191,7 @@ export async function create_game(
     away_score: number
 ): Promise<Option<Game>> {
     const res = await db`
-INSERT INTO games (date, home, home_score, away, away_score)
+INSERT INTO v3.games (date, home, home_score, away, away_score)
 VALUES (${date}, ${home}, ${home_score}, ${away}, ${away_score})
 RETURNING id`;
 
@@ -203,6 +203,6 @@ RETURNING id`;
 
 export async function delete_game(id: GameId) {
     await db`
-DELETE FROM games
+DELETE FROM v3.games
 WHERE id = ${id}`;
 }
