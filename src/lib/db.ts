@@ -82,7 +82,7 @@ export async function get_team_id(slug: Slug): Promise<Option<TeamId>> {
 
     if (res.length < 1)
         return None;
-    return res[0].id;
+  return Some(res[0].id);
 }
 
 export async function get_team(slug: Slug): Promise<Option<Team>> {
